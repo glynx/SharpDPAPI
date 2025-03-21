@@ -17,6 +17,7 @@ namespace SharpChrome
     {
         internal static byte[] DPAPI_HEADER = UTF8Encoding.UTF8.GetBytes("DPAPI");
         internal static byte[] DPAPI_CHROME_UNKV10 = UTF8Encoding.UTF8.GetBytes("v10");
+        internal static byte[] DPAPI_CHROME_UNKV20 = UTF8Encoding.UTF8.GetBytes("v20");
         internal const int AES_BLOCK_SIZE = 16;
 
         // approach adapted from @djhohnstein's https://github.com/djhohnstein/SharpChrome/ project
@@ -446,6 +447,26 @@ namespace SharpChrome
                         if (decBytes == null)
                         {
                             continue;
+                        }
+                    }
+                    else if (HasV20Header(valueBytes))
+                    {
+                        if (aesStateKey != null)
+                        {
+                            // For V20 we decrypt it like V10 but strip some extra metadata
+                            byte[] rawDecBytes = DecryptAESChromeBlob(valueBytes, hAlg, hKey);
+                            int cookieLength = rawDecBytes.Length - 33;
+                            decBytes = new byte[cookieLength];
+                            Array.Copy(rawDecBytes, 32, decBytes, 0, cookieLength);
+
+                            if (decBytes == null)
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            decBytes = Encoding.ASCII.GetBytes(String.Format("AES State Key Needed"));
                         }
                     }
                     else
@@ -936,7 +957,7 @@ namespace SharpChrome
 
             unsafe
             {
-                if (SharpDPAPI.Helpers.ByteArrayEquals(dwData, 0, DPAPI_CHROME_UNKV10, 0, 3))
+                if (SharpDPAPI.Helpers.ByteArrayEquals(dwData, 0, DPAPI_CHROME_UNKV10, 0, 3) || SharpDPAPI.Helpers.ByteArrayEquals(dwData, 0, DPAPI_CHROME_UNKV20, 0, 3))
                 {
                     subArrayNoV10 = new byte[dwData.Length - DPAPI_CHROME_UNKV10.Length];
                     Array.Copy(dwData, 3, subArrayNoV10, 0, dwData.Length - DPAPI_CHROME_UNKV10.Length);
