@@ -574,12 +574,12 @@ namespace SharpChrome
                     // decrypt the encrypted cookie value with whatever data/method is specified
                     byte[] valueBytes = (byte[])row.column[6].Value;
 
-                    if (HasV10Header(passwordBytes))
+                    if (HasV10Header(valueBytes))
                     {
                         if (aesStateKey != null)
                         {
                             // using the new DPAPI decryption method
-                            decBytes = Encoding.ASCII.GetBytes(Convert.ToBase64String(DecryptAESChromeBlob(passwordBytes, hAlg, hKey)));
+                            decBytes = DecryptAESChromeBlob(valueBytes, hAlg, hKey);
 
                             if (decBytes == null)
                             {
@@ -588,13 +588,33 @@ namespace SharpChrome
                         }
                         else
                         {
-                            decBytes = Encoding.ASCII.GetBytes(String.Format("--AES STATE KEY NEEDED--"));
+                            decBytes = Encoding.ASCII.GetBytes(String.Format("AES State Key Needed"));
                         }
-                    } 
+                    }
+                    else if (HasV20Header(valueBytes))
+                    {
+                        if (aesStateKey != null)
+                        {
+                            // For V20 we decrypt it like V10 but strip some extra metadata
+                            byte[] rawDecBytes = DecryptAESChromeBlob(valueBytes, hAlg, hKey);
+                            int cookieLength = rawDecBytes.Length - 33;
+                            decBytes = new byte[cookieLength];
+                            Array.Copy(rawDecBytes, 32, decBytes, 0, cookieLength);
+
+                            if (decBytes == null)
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            decBytes = Encoding.ASCII.GetBytes(String.Format("AES State Key Needed"));
+                        }
+                    }
                     else
                     {
                         // using the old method
-                        decBytes = SharpDPAPI.Dpapi.DescribeDPAPIBlob(passwordBytes, MasterKeys, "chrome", unprotect);
+                        decBytes = SharpDPAPI.Dpapi.DescribeDPAPIBlob(valueBytes, MasterKeys, "chrome", unprotect);
                     }
 
                     string value = Encoding.ASCII.GetString(decBytes);
