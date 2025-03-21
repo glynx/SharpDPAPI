@@ -786,7 +786,11 @@ namespace SharpChrome
                         }
                     }
                 }
-                catch { }
+                } catch (Exception ex) { 
+                    if(!displayFormat.Equals("json")){
+                        Console.WriteLine("\r\n[X] Failed to decrypt: {0}", ex.ToString());
+                    }
+                }
             }
 
             if (displayFormat.Equals("json") && someResults)
