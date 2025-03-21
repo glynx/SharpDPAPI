@@ -437,7 +437,7 @@ namespace SharpChrome
 
                 // decrypt the password bytes using masterkeys or CryptUnprotectData()
 
-                if (HasV10Header(passwordBytes))
+                if (HasV10Header(passwordBytes) || HasV20Header(valueBytes))
                 {
                     if (aesStateKey != null)
                     {
@@ -447,26 +447,6 @@ namespace SharpChrome
                         if (decBytes == null)
                         {
                             continue;
-                        }
-                    }
-                    else if (HasV20Header(valueBytes))
-                    {
-                        if (aesStateKey != null)
-                        {
-                            // For V20 we decrypt it like V10 but strip some extra metadata
-                            byte[] rawDecBytes = DecryptAESChromeBlob(valueBytes, hAlg, hKey);
-                            int cookieLength = rawDecBytes.Length - 33;
-                            decBytes = new byte[cookieLength];
-                            Array.Copy(rawDecBytes, 32, decBytes, 0, cookieLength);
-
-                            if (decBytes == null)
-                            {
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            decBytes = Encoding.ASCII.GetBytes(String.Format("AES State Key Needed"));
                         }
                     }
                     else
@@ -604,6 +584,26 @@ namespace SharpChrome
                             if (decBytes == null)
                             {
                                 continue;
+                            }
+                        } 
+                        else if (HasV20Header(valueBytes))
+                        {
+                            if (aesStateKey != null)
+                            {
+                                // For V20 we decrypt it like V10 but strip some extra metadata
+                                byte[] rawDecBytes = DecryptAESChromeBlob(valueBytes, hAlg, hKey);
+                                int cookieLength = rawDecBytes.Length - 33;
+                                decBytes = new byte[cookieLength];
+                                Array.Copy(rawDecBytes, 32, decBytes, 0, cookieLength);
+
+                                if (decBytes == null)
+                                {
+                                    continue;
+                                }
+                            }
+                            else
+                            {
+                                decBytes = Encoding.ASCII.GetBytes(String.Format("AES State Key Needed"));
                             }
                         }
                         else
