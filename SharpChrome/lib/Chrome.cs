@@ -437,7 +437,7 @@ namespace SharpChrome
 
                 // decrypt the password bytes using masterkeys or CryptUnprotectData()
 
-                if (HasV10Header(passwordBytes) || HasV20Header(valueBytes))
+                if (HasV10Header(passwordBytes) || HasV20Header(passwordBytes))
                 {
                     if (aesStateKey != null)
                     {
