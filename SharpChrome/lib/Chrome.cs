@@ -1009,5 +1009,10 @@ namespace SharpChrome
         {
             return SharpDPAPI.Helpers.ByteArrayEquals(data, 0, DPAPI_CHROME_UNKV10, 0, 3);
         }
+
+        public static bool HasV20Header(byte[] data)
+        {
+            return SharpDPAPI.Helpers.ByteArrayEquals(data, 0, DPAPI_CHROME_UNKV20, 0, 3);
+        }
     }
 }
